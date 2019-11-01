@@ -2,6 +2,7 @@
 """
 import cv2
 import numpy as np
+import imutils
 
 # 開啟網路攝影機
 cap = cv2.VideoCapture(0)
@@ -31,7 +32,7 @@ while(cap.isOpened()):
     break
 
   # 模糊處理
-  blur = cv2.blur(frame, (10, 10))
+  blur = cv2.blur(frame, (4, 4))
 
   # 計算目前影格與平均影像的差異值
   diff = cv2.absdiff(avg, blur)
@@ -40,7 +41,7 @@ while(cap.isOpened()):
   gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
 
   # 篩選出變動程度大於門檻值的區域
-  ret, thresh = cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)
+  ret, thresh = cv2.threshold(gray, 5, 255, cv2.THRESH_BINARY)
 
   # 使用型態轉換函數去除雜訊
   kernel = np.ones((5, 5), np.uint8)
@@ -48,9 +49,13 @@ while(cap.isOpened()):
   thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=2)
 
   # 產生等高線
-  cntImg, cnts, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-  for c in cnts:
+  # cntImg, cnts, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+  contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+  
+  # Hack for compatibility with different OpenCV versions
+  contours = contours[1] if imutils.is_cv3() else contours[0]
+  
+  for c in contours:
     # 忽略太小的區域
     if cv2.contourArea(c) < 2500:
       continue
@@ -64,7 +69,7 @@ while(cap.isOpened()):
     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
   # 畫出等高線（除錯用）
-  cv2.drawContours(frame, cnts, -1, (0, 255, 255), 2)
+  cv2.drawContours(frame, contours, -1, (0, 255, 255), 2)
 
   # 顯示偵測結果影像
   cv2.imshow('frame', frame)
