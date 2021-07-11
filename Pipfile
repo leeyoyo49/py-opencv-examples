@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 opencv-python = "*"
 imutils = "*"
+pipfile = "*"
+numpy = "==1.14.3"
 
 [dev-packages]
 yapf = "*"
